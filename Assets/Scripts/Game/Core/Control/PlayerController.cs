@@ -6,16 +6,22 @@ namespace Game.Core.Control
 {
     public class PlayerController : MonoBehaviour
     {
-        // Start is called before the first frame update
         [SerializeField] private MoveModule moveModule;
+        [SerializeField] private float dashCooldown = 0.5f;
+        [SerializeField] private bool isDashCoolingDown = false;
+        private IEnumerator DashCooldownCoroutine()
+        {
+            yield return new WaitForSeconds(dashCooldown);
+            isDashCoolingDown = false;
+        }
         KeyBindSystem<PlayerKey> keyBindSystem => GameSettings.playerKeyBindSystem;
         KeyCode dashKey => keyBindSystem.GetKeyCode(PlayerKey.Dash);
-        void Start()
+        void Awake()
         {
-            
+            if (moveModule == null) LogError("MoveModule is not assigned");
+            isDashCoolingDown = false;
         }
 
-        // Update is called once per frame
         void Update()
         {
             HandleInput();
@@ -30,9 +36,13 @@ namespace Game.Core.Control
             Vector2 inputDir = GetInputDir();
             moveModule.ApplyMoveDir(inputDir);
             if (Input.GetKeyDown(dashKey)) {
+                if (isDashCoolingDown) return;
+                isDashCoolingDown = true;
                 moveModule.ApplyDash(inputDir);
+                StartCoroutine(DashCooldownCoroutine());
             }
         }
+
         private void HandleAttackInput()
         {
 
@@ -42,6 +52,10 @@ namespace Game.Core.Control
             float moveHorizontal = Input.GetAxisRaw("Horizontal");
             float moveVertical = Input.GetAxisRaw("Vertical");
             return new Vector2(moveHorizontal, moveVertical).normalized;
+        }
+        private void LogError(string message)
+        {
+            Debug.LogError($"[{name}.PlayerController] " + message);
         }
     }
 }
