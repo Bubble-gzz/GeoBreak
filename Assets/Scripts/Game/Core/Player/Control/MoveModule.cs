@@ -1,13 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Game.System;
+using Game.Simulation;
 
 namespace Game.Core.Control
 {
     /*
         提供物体移动能力的模块
     */
-    public class MoveModule : MonoBehaviour
+    public class MoveModule : MonoBehaviour, ISimulationObject
     {
         [SerializeField] public float maxSpeed = 10f;
         [SerializeField] public float dampTime = 0.1f;
@@ -21,30 +23,33 @@ namespace Game.Core.Control
         void Awake()
         {
             if (rb == null) LogError("Rigidbody2D is not assigned");
+        }
+        public void Init()
+        {
             velocity = Vector2.zero;
         }
 
-        void Update()
+        public void Tick(TickCtx tickCtx)
         {
-            UpdateVelocity();
+            UpdateVelocity(tickCtx.deltaTime);
         }
 
-        private void UpdateVelocity()
+        private void UpdateVelocity(float deltaTime)
         {
             if (velocity.magnitude > maxSpeed)
             {
                 velocity = velocity.normalized * velocity.magnitude * dampingWhenOverSpeed;
             }
             else {
-                Vector2 dampVector = - velocity.normalized * Mathf.Min(damp * Time.deltaTime, velocity.magnitude);
+                Vector2 dampVector = - velocity.normalized * Mathf.Min(damp * deltaTime, velocity.magnitude);
                 velocity += dampVector;
             }
             rb.velocity = velocity;
         }
-        public void ApplyMoveDir(Vector2 dir)
+        public void ApplyMoveDir(Vector2 dir, float deltaTime)
         {
             if (dir.magnitude == 0) return;
-            Vector2 v_accel = dir * accel * Time.deltaTime;
+            Vector2 v_accel = dir * accel * deltaTime;
 
             Vector2 v = velocity;
             Vector2 v2 = v + v_accel;
@@ -56,7 +61,10 @@ namespace Game.Core.Control
                     float accel_along_v2 = Vector2.Dot(v_accel, v2.normalized);
                     if (v_along_v2 > 0)
                     {
-                        if (accel_along_v2 > 0) v2 = v2.normalized * Mathf.Max(v.magnitude, maxSpeed);
+                        if (accel_along_v2 > 0)
+                        {
+                            v2 = v2.normalized * Mathf.Max(v.magnitude, maxSpeed);
+                        }
                     }
                     else
                     {
@@ -71,9 +79,9 @@ namespace Game.Core.Control
         {
             velocity += dashDir * dashExtraSpeed;
         }
-        private void LogError(string message)
+        private void LogError(string msg)
         {
-            Debug.LogError($"[{name}.MoveController] " + message);
+            Debug.LogError($"[{name}.MoveModule] " + msg);
         }
     }
 }

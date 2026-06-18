@@ -4,11 +4,25 @@ using UnityEngine;
 using Game.Core.Control;
 namespace Game.System
 {
-    public static class GameSettings
+    public class GameSettings
     {
+        private static GameSettings _localInstance;
+        public static GameSettings LocalInstance {
+            get {
+                if (_localInstance == null)
+                {
+                    _localInstance = new GameSettings();
+                }
+                return _localInstance;
+            }
+            set {
+                _localInstance = value;
+            }
+        }
+        
         #region Player Key Bind System
-        private static KeyBindSystem<PlayerKey> _playerKeyBindSystem;
-        private static KeyBindSystem<PlayerKey> DefaultPlayerKeyBindSystem()
+        private KeyBindSystem<PlayerKey> _playerKeyBindSystem;
+        private KeyBindSystem<PlayerKey> DefaultPlayerKeyBindSystem()
         {
             KeyBindSystem<PlayerKey> keyBindSystem = new KeyBindSystem<PlayerKey>();
             keyBindSystem.AddKeyBind(PlayerKey.Dash, KeyCode.Space);
@@ -16,7 +30,7 @@ namespace Game.System
             keyBindSystem.AddKeyBind(PlayerKey.Fire, KeyCode.Mouse0);
             return keyBindSystem;
         }
-        public static KeyBindSystem<PlayerKey> playerKeyBindSystem
+        public KeyBindSystem<PlayerKey> playerKeyBindSystem
         {
             get
             {
