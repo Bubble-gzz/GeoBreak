@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Game.Simulation
+namespace Game.Render
 {
     public class TransformRenderer : MonoBehaviour, IRenderObject<TransformData>
     {

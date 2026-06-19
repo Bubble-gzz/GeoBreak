@@ -37,7 +37,6 @@ namespace Game.Core.Control
         }
         private void HandleMoveInput(float deltaTime, Vector2 inputDir, bool isDashKeyDown)
         {
-            if (inputDir.magnitude == 0) return;
             if (moveModule == null) {
                 LogError("MoveModule is not assigned");
                 return;

@@ -52,22 +52,34 @@ namespace Game.Simulation
         }
         List<ISimulationObject> simulationObjects;
         int tickCount;
+        InputData localInputDataThisTick;
         void Tick()
         {
+            BeforeTick();
+
             TickCtx tickCtx = BuildTickCtx();
             Log($"Tick #{tickCount}: Ctx = {tickCtx}");
             foreach (var simulationObject in simulationObjects)
             {
                 simulationObject.Tick(tickCtx);
             }
+
+            AfterTick();
+        }
+        void BeforeTick()
+        {
+            localInputDataThisTick = InputManager.Instance.ConsumeInputDataOverFrames();
+        }
+        void AfterTick()
+        {
             tickCount++;
         }
         TickCtx BuildTickCtx()
         {
             TickCtx tickCtx = new TickCtx();
-            tickCtx.deltaTime = Time.deltaTime;
+            tickCtx.deltaTime = Time.fixedDeltaTime;
             tickCtx.rng = rng;
-            tickCtx.inputDatas = new List<InputData> { InputManager.GetInputData() };
+            tickCtx.inputDatas = new List<InputData> { localInputDataThisTick };
             tickCtx.gameSettings = new List<GameSettings> { GameSettings.LocalInstance };
             return tickCtx;
         }
@@ -86,9 +98,4 @@ namespace Game.Simulation
         void Tick(TickCtx tickCtx);
         void Init();
     }
-    public interface IRenderObject<T>
-    {
-        void Render(T data, float deltaTime);
-    }
-
 }

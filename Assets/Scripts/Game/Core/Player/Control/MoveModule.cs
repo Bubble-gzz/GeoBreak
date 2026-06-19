@@ -38,7 +38,8 @@ namespace Game.Core.Control
         {
             if (velocity.magnitude > maxSpeed)
             {
-                velocity = velocity.normalized * velocity.magnitude * dampingWhenOverSpeed;
+                float dampFactor = Mathf.Pow(dampingWhenOverSpeed, deltaTime / GameConstants.referenceDeltaTime);
+                velocity *= dampFactor;
             }
             else {
                 Vector2 dampVector = - velocity.normalized * Mathf.Min(damp * deltaTime, velocity.magnitude);
@@ -77,6 +78,7 @@ namespace Game.Core.Control
         }
         public void ApplyDash(Vector2 dashDir)
         {
+            if (dashDir.magnitude == 0) dashDir = velocity.normalized;
             velocity += dashDir * dashExtraSpeed;
         }
         private void LogError(string msg)

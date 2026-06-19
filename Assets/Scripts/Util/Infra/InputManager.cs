@@ -2,11 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Game.Util;
 namespace Game.Simulation
 {
-    public static class InputManager
+    public class InputManager : SingletonMonobehaviour<InputManager>
     {
-        public static InputData GetInputData()
+        [SerializeField] private int inputDataCacheSize = 10;
+        private Queue<InputData> inputDataCache;
+        override protected void MyAwake()
+        {
+            inputDataCache = new Queue<InputData>(inputDataCacheSize);
+        }
+        void Update()
+        {
+            InputData inputData = GetInputSnapshot();
+            inputDataCache.Enqueue(inputData);
+            if (inputDataCache.Count > inputDataCacheSize)
+            {
+                inputDataCache.Dequeue();
+            }
+        }
+        private InputData GetInputSnapshot()
         {
             InputData inputData = new InputData();
             foreach (KeyCode keyCode in Enum.GetValues(typeof(KeyCode)))
@@ -19,12 +35,55 @@ namespace Game.Simulation
             inputData.GetAxisRaw["Vertical"] = Input.GetAxisRaw("Vertical");
             return inputData;
         }
+        public void ClearInputDataCache()
+        {
+            inputDataCache.Clear();
+        }
+        public InputData GetInputDataOverFrames()
+        {
+            InputData inputData = new InputData();
+            foreach(KeyCode keyCode in Enum.GetValues(typeof(KeyCode)))
+            {
+                foreach(InputData frame in inputDataCache)
+                {
+                    inputData.GetKeyDown[keyCode] |= frame.GetKeyDown[keyCode];
+                    inputData.GetKeyUp[keyCode] |= frame.GetKeyUp[keyCode];
+                    inputData.GetKey[keyCode] |= frame.GetKey[keyCode];
+                    inputData.GetAxisRaw["Horizontal"] += frame.GetAxisRaw["Horizontal"];
+                    inputData.GetAxisRaw["Vertical"] += frame.GetAxisRaw["Vertical"];
+                }
+                inputData.GetAxisRaw["Horizontal"] /= inputDataCache.Count;
+                inputData.GetAxisRaw["Vertical"] /= inputDataCache.Count;
+            }
+            return inputData;
+        }
+        public InputData GetInputDataOfLatestFrame()
+        {
+            return inputDataCache.Peek();
+        }
+        public InputData ConsumeInputDataOverFrames()
+        {
+            InputData inputData = GetInputDataOverFrames();
+            ClearInputDataCache();
+            return inputData;
+        }
     }
     public class InputData{
         public Dictionary<KeyCode, bool> GetKeyDown = new Dictionary<KeyCode, bool>();
         public Dictionary<KeyCode, bool> GetKeyUp = new Dictionary<KeyCode, bool>();
         public Dictionary<KeyCode, bool> GetKey = new Dictionary<KeyCode, bool>();
         public Dictionary<string, float> GetAxisRaw = new Dictionary<string, float>();
+        public InputData()
+        {
+            foreach(KeyCode keyCode in Enum.GetValues(typeof(KeyCode)))
+            {
+                GetKeyDown[keyCode] = false;
+                GetKeyUp[keyCode] = false;
+                GetKey[keyCode] = false;
+            }
+            GetAxisRaw["Horizontal"] = 0f;
+            GetAxisRaw["Vertical"] = 0f;
+        }
         override public string ToString()
         {
             return "InputData";
