@@ -6,8 +6,8 @@ namespace Game.Simulation
     public class TickOrder : Attribute
     {
         public const int DefaultOrder = 0;
-        public const int ControlOrder = 3000;
-        public const int RenderOrder = 2000;
+        public const int ControlOrder = 2000;
+        public const int RenderOrder = 3000;
         public int Order { get; }
 
         public TickOrder(int order)
