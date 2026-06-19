@@ -5,7 +5,7 @@ using System;
 using Game.Util;
 namespace Game.Simulation
 {
-    public class InputManager : SingletonMonobehaviour<InputManager>
+    public class InputProcessor : SingletonMonobehaviour<InputProcessor>
     {
         [SerializeField] private int inputDataCacheSize = 10;
         private Queue<InputData> inputDataCache;

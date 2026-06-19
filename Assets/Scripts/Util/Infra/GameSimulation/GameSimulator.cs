@@ -9,10 +9,12 @@ namespace Game.Simulation
 {
     public class GameSimulator : MonoBehaviour
     {
-        public IRandomGenerator rng;
+        private IRandomGenerator rng;
+        private SimRegistry simRegistry;
         public void Init(int seed)
         {
             rng = new RandomGenerator(seed);
+            simRegistry = new SimRegistry();
         }
         public void InitWithRandomSeed()
         {
@@ -30,17 +32,20 @@ namespace Game.Simulation
         }
         void FetchSimulatedObjectsInScene()
         {
-            simulationObjects = new List<ISimulationObject>();
+            List<ISimulationObject> simulationObjectsList = new List<ISimulationObject>();
             MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
             foreach (MonoBehaviour behaviour in behaviours)
             {
                 if (behaviour is ISimulationObject simulationObject)
                 {
-                    simulationObjects.Add(simulationObject);
-                    simulationObject.Init();
+                    simulationObjectsList.Add(simulationObject);
                 }
             }
-            Log($"Fetched {simulationObjects.Count} simulation objects: [{string.Join(", ", simulationObjects.Select(s => s.ToString()))}]");
+            foreach (var simulationObject in simulationObjectsList)
+            {
+                simRegistry.RegisterSimulationObject(simulationObject);
+            }
+            this.Log($"Fetched {simulationObjectsList.Count} simulation objects: [{string.Join(", ", simulationObjectsList.Select(s => s.ToString()))}]");
         }
         IEnumerator RunSimulationCoroutine()
         {
@@ -50,16 +55,15 @@ namespace Game.Simulation
                 yield return new WaitForFixedUpdate();
             }
         }
-        List<ISimulationObject> simulationObjects;
         int tickCount;
         InputData localInputDataThisTick;
         void Tick()
         {
             BeforeTick();
 
-            TickCtx tickCtx = BuildTickCtx();
-            Log($"Tick #{tickCount}: Ctx = {tickCtx}");
-            foreach (var simulationObject in simulationObjects)
+            TickContext tickCtx = BuildTickCtx();
+            this.Log($"Tick #{tickCount}: Ctx = {tickCtx}");
+            foreach (var simulationObject in simRegistry.GetSimulationObjects())
             {
                 simulationObject.Tick(tickCtx);
             }
@@ -68,15 +72,15 @@ namespace Game.Simulation
         }
         void BeforeTick()
         {
-            localInputDataThisTick = InputManager.Instance.ConsumeInputDataOverFrames();
+            localInputDataThisTick = InputProcessor.Instance.ConsumeInputDataOverFrames();
         }
         void AfterTick()
         {
             tickCount++;
         }
-        TickCtx BuildTickCtx()
+        TickContext BuildTickCtx()
         {
-            TickCtx tickCtx = new TickCtx();
+            TickContext tickCtx = new TickContext();
             tickCtx.deltaTime = Time.fixedDeltaTime;
             tickCtx.rng = rng;
             tickCtx.inputDatas = new List<InputData> { localInputDataThisTick };
@@ -85,17 +89,12 @@ namespace Game.Simulation
         }
         public void RegisterSimulationObject(ISimulationObject simulationObject)
         {
-            if (simulationObjects == null) simulationObjects = new List<ISimulationObject>();
-            simulationObjects.Add(simulationObject);
-        }
-        void Log(string msg)
-        {
-            Debug.Log($"[GameSimulator] " + msg);
+            simRegistry.RegisterSimulationObject(simulationObject);
         }
     }
     public interface ISimulationObject
     {
-        void Tick(TickCtx tickCtx);
+        void Tick(TickContext tickCtx);
         void Init();
     }
 }

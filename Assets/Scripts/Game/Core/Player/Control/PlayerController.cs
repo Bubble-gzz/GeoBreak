@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Simulation;
 namespace Game.Core.Control
 {
+    [TickOrder(TickOrder.ControlOrder)]
     public class PlayerController : SimulatedMonobehaviour
     {
         [SerializeField] private MoveModule moveModule;
@@ -14,7 +15,7 @@ namespace Game.Core.Control
         {   
             isDashCoolingDown = false;
         }
-        override public void Tick(TickCtx tickCtx)
+        override public void Tick(TickContext tickCtx)
         {
             HandleInput(tickCtx.deltaTime, tickCtx.inputDatas[playerId], tickCtx.gameSettings[playerId].playerKeyBindSystem);
             DashCooldownTick(tickCtx.deltaTime);

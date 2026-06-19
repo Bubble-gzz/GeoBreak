@@ -9,7 +9,8 @@ namespace Game.Core.Control
     /*
         提供物体移动能力的模块
     */
-    public class MoveModule : MonoBehaviour, ISimulationObject
+    [TickOrder(TickOrder.RenderOrder)]
+    public class MoveModule : SimulatedMonobehaviour
     {
         [SerializeField] public float maxSpeed = 10f;
         [SerializeField] public float dampTime = 0.1f;
@@ -24,12 +25,12 @@ namespace Game.Core.Control
         {
             if (rb == null) LogError("Rigidbody2D is not assigned");
         }
-        public void Init()
+        override public void Init()
         {
             velocity = Vector2.zero;
         }
 
-        public void Tick(TickCtx tickCtx)
+        override public void Tick(TickContext tickCtx)
         {
             UpdateVelocity(tickCtx.deltaTime);
         }

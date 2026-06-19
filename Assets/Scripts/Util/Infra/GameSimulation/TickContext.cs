@@ -6,7 +6,7 @@ using Game.Util;
 
 namespace Game.Simulation
 {
-    public class TickCtx{
+    public class TickContext{
         public float deltaTime;
         public IRandomGenerator rng;
         public List<InputData> inputDatas = new List<InputData>();

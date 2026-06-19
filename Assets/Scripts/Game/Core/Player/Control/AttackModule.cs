@@ -4,6 +4,7 @@ using UnityEngine;
 using Game.Simulation;
 namespace Game.Core.Control
 {
+    [TickOrder(TickOrder.RenderOrder)]
     public class AttackModule : SimulatedMonobehaviour
     {
         // Start is called before the first frame update
@@ -12,7 +13,7 @@ namespace Game.Core.Control
         {
 
         }
-        override public void Tick(TickCtx tickCtx)
+        override public void Tick(TickContext tickCtx)
         {
             
         }
