@@ -60,14 +60,8 @@ namespace Game.Simulation
         void Tick()
         {
             BeforeTick();
-
-            TickContext tickCtx = BuildTickCtx();
-            this.Log($"Tick #{tickCount}: Ctx = {tickCtx}");
-            foreach (var simulationObject in simRegistry.GetSimulationObjects())
-            {
-                simulationObject.Tick(tickCtx);
-            }
-
+            TickSimulation();
+            TickRender();
             AfterTick();
         }
         void BeforeTick()
@@ -78,7 +72,20 @@ namespace Game.Simulation
         {
             tickCount++;
         }
-        TickContext BuildTickCtx()
+        void TickSimulation()
+        {
+            TickContext tickCtx = BuildTickContext();
+            this.Log($"Tick #{tickCount}: Ctx = {tickCtx}");
+            foreach (var simulationObject in simRegistry.GetOrderedSimulationObjects())
+            {
+                simulationObject.Tick(tickCtx);
+            }
+        }
+        void TickRender()
+        {
+            
+        }
+        TickContext BuildTickContext()
         {
             TickContext tickCtx = new TickContext();
             tickCtx.deltaTime = Time.fixedDeltaTime;
@@ -96,5 +103,7 @@ namespace Game.Simulation
     {
         void Tick(TickContext tickCtx);
         void Init();
+        void SerializeState(StateWriter writer);
+        void DeserializeState(StateReader reader);
     }
 }

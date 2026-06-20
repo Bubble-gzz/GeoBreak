@@ -18,7 +18,7 @@ namespace Game.Simulation
             string id = (simulationObject as MonoBehaviour).GetComponentKey();
             simulationObjects.Add((tickOrder, id), simulationObject);
         }
-        public IEnumerable<ISimulationObject> GetSimulationObjects()
+        public IEnumerable<ISimulationObject> GetOrderedSimulationObjects()
         {
             this.Log($"Getting {simulationObjects.Count} simulation objects: \n[\n{string.Join("\n ", simulationObjects.Select(s => "  " + s.Value.ToString()))}\n]");
             return simulationObjects.Values;

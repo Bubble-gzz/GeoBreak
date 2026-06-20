@@ -21,6 +21,7 @@ namespace Game.Core.Control
         [SerializeField] public float dashExtraSpeed = 10f;
         [SerializeField] public Rigidbody2D rb;
         [SerializeField] private Vector2 velocity;
+        bool dampedThisTick;
         void Awake()
         {
             if (rb == null) LogError("Rigidbody2D is not assigned");
@@ -28,11 +29,13 @@ namespace Game.Core.Control
         override public void Init()
         {
             velocity = Vector2.zero;
+            dampedThisTick = false;
         }
 
         override public void Tick(TickContext tickCtx)
         {
             UpdateVelocity(tickCtx.deltaTime);
+            dampedThisTick = false;
         }
 
         private void UpdateVelocity(float deltaTime)
@@ -43,15 +46,19 @@ namespace Game.Core.Control
                 velocity *= dampFactor;
             }
             else {
-                Vector2 dampVector = - velocity.normalized * Mathf.Min(damp * deltaTime, velocity.magnitude);
-                velocity += dampVector;
+                if (!dampedThisTick) {
+                    Vector2 dampVector = - velocity.normalized * Mathf.Min(damp * deltaTime, velocity.magnitude);
+                    velocity += dampVector;
+                    dampedThisTick = true;
+                }
             }
             rb.velocity = velocity;
         }
         public void ApplyMoveDir(Vector2 dir, float deltaTime)
         {
             if (dir.magnitude == 0) return;
-            Vector2 v_accel = dir * accel * deltaTime;
+            Vector2 v_accel = dir * (accel - damp) * deltaTime;
+            dampedThisTick = true;
 
             Vector2 v = velocity;
             Vector2 v2 = v + v_accel;
