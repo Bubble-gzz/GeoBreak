@@ -23,5 +23,9 @@ namespace Game.Simulation
             this.Log($"Getting {simulationObjects.Count} simulation objects: \n[\n{string.Join("\n ", simulationObjects.Select(s => "  " + s.Value.ToString()))}\n]");
             return simulationObjects.Values;
         }
+        public void Clear()
+        {
+            simulationObjects.Clear();
+        }
     }
 }

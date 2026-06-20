@@ -34,7 +34,7 @@ namespace Game.Core.Control
             bool isDashKeyDown = inputData.GetKeyDown[keyBindSystem.GetKeyCode(PlayerKey.Dash)];
             HandleMoveInput(deltaTime, GetInputDir(inputData), isDashKeyDown);
             bool isFireKeyDown = inputData.GetKeyDown[keyBindSystem.GetKeyCode(PlayerKey.Fire)];
-            HandleAttackInput(isFireKeyDown);
+            //HandleAttackInput(isFireKeyDown);
         }
         private void HandleMoveInput(float deltaTime, Vector2 inputDir, bool isDashKeyDown)
         {
