@@ -1,21 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Game.Simulation;
 
 namespace Game.Render
 {
-    public class TransformRenderer : MonoBehaviour
+    public class PositionRenderer : MonoBehaviour
     {
         [SerializeField] private Transform renderTarget;
         private const float MinInterpolationDuration = 0.0001f;
 
         private Vector3 startPosition;
         private Vector3 targetPosition;
-        private float startRotation;
-        private float targetRotation;
-        private Vector3 startScale;
-        private Vector3 targetScale;
         private float interpolationDuration = MinInterpolationDuration;
         private float interpolationTime;
         private bool hasTarget;
@@ -33,34 +28,17 @@ namespace Game.Render
             float t = interpolationTime / interpolationDuration;
 
             renderTarget.position = Vector3.Lerp(startPosition, targetPosition, t);
-            renderTarget.rotation = Quaternion.Euler(0f, 0f, Mathf.LerpAngle(startRotation, targetRotation, t));
-            renderTarget.localScale = Vector3.Lerp(startScale, targetScale, t);
         }
 
-        public void Render(TransformData data, float deltaTime)
+        public void Render(Vector2 position, float deltaTime)
         {
             if (renderTarget == null) renderTarget = transform;
 
             startPosition = renderTarget.position;
-            targetPosition = new Vector3(data.position.x, data.position.y, renderTarget.position.z);
-            startRotation = renderTarget.eulerAngles.z;
-            targetRotation = data.rotation;
-            startScale = renderTarget.localScale;
-            targetScale = new Vector3(data.scale.x, data.scale.y, renderTarget.localScale.z);
+            targetPosition = new Vector3(position.x, position.y, renderTarget.position.z);
             interpolationDuration = Mathf.Max(deltaTime, MinInterpolationDuration);
             interpolationTime = 0f;
             hasTarget = true;
-        }
-    }
-    public class TransformData{
-        public Vector2 position;
-        public float rotation;
-        public Vector2 scale;
-        public TransformData(Vector2 position, float rotation, Vector2 scale)
-        {
-            this.position = position;
-            this.rotation = rotation;
-            this.scale = scale;
         }
     }
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Game.System;
 using Game.Simulation;
+using Game.Util;
+using Game.Render;
 
 namespace Game.Core.Control
 {
@@ -19,17 +21,22 @@ namespace Game.Core.Control
         private float damp => maxSpeed / Mathf.Max(dampTime, 0.001f);
         private float accel => maxSpeed / Mathf.Max(accelTime, 0.001f) + damp;
         [SerializeField] public float dashExtraSpeed = 10f;
-        [SerializeField] public Rigidbody2D rb;
+        [SerializeField] public SimRigidbody rb;
+        [SerializeField] public PositionRenderer positionRenderer;
         [SerializeField] private Vector2 velocity;
         bool dampedThisTick;
-        void Awake()
-        {
-            if (rb == null) LogError("Rigidbody2D is not assigned");
-        }
         override public void Init()
         {
             velocity = Vector2.zero;
             dampedThisTick = false;
+            if (rb == null) {
+                rb = GetComponent<SimRigidbody>();
+                if (rb != null) this.Log("Auto assigned SimRigidbody", true);
+            }
+            if (rb == null) {
+                rb = gameObject.AddComponent<SimRigidbody>();
+                this.Log("Auto added SimRigidbody", true);
+            }
         }
 
         override public void Tick(TickContext tickCtx)
@@ -92,6 +99,22 @@ namespace Game.Core.Control
         private void LogError(string msg)
         {
             Debug.LogError($"[{name}.MoveModule] " + msg);
+        }
+        override public void SerializeState(StateWriter writer)
+        {
+            writer.WriteVector2(velocity);
+        }
+        override public void DeserializeState(StateReader reader)
+        {
+            velocity = reader.ReadVector2();
+        }
+        override public void Render(float deltaTime)
+        {
+            if (positionRenderer == null) {
+                this.Log("PositionRenderer is not assigned", true);
+                return;
+            }
+            positionRenderer.Render(rb.position, deltaTime);
         }
     }
 }

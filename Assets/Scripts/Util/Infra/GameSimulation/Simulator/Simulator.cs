@@ -46,9 +46,22 @@ namespace Game.Simulation
     }
     public interface ISimulationObject
     {
-        void Tick(TickContext tickCtx);
+        string id { get; }
         void Init();
+        void Tick(TickContext tickCtx);
         void SerializeState(StateWriter writer);
         void DeserializeState(StateReader reader);
+        void Render(float deltaTime);
+    }
+    public class SimObjectState{
+        public int tick;
+        public string objectId;
+        public byte[] data;
+        public SimObjectState(int tick, string objectId, byte[] data)
+        {
+            this.tick = tick;
+            this.objectId = objectId;
+            this.data = data;
+        }
     }
 }

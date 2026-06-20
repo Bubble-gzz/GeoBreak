@@ -11,10 +11,12 @@ namespace Game.Simulation
         private int tickCount;
         private InputData localInputDataThisTick;
         List<TickContext> tickHistory;
+        List<SimObjectState> stateHistory;
         protected override void ExtraInit()
         {
             tickCount = 0;
             tickHistory = new List<TickContext>();
+            stateHistory = new List<SimObjectState>();
         }
         public void RunWithRandomSeed()
         {
@@ -52,23 +54,38 @@ namespace Game.Simulation
         {
             localInputDataThisTick = InputProcessor.Instance.ConsumeInputDataOverFrames();
         }
+        const int SYNC_FRAME_INTERVAL = 500;
         void AfterTick()
         {
+            if (tickCount % SYNC_FRAME_INTERVAL == 0) {
+                foreach (var simulationObject in simRegistry.GetOrderedSimulationObjects())
+                {
+                    string objectId = simulationObject.id;
+                    StateWriter writer = new StateWriter();
+                    simulationObject.SerializeState(writer);
+                    byte[] data = writer.ToArray();
+                    SimObjectState snapshot = new SimObjectState(tickCount, objectId, data);
+                    stateHistory.Add(snapshot);
+                }
+            }
             tickCount++;
         }
         void TickSimulation()
         {
             TickContext tickCtx = BuildTickContext();
+            tickHistory.Add(tickCtx);
             this.Log($"Tick #{tickCount}: Ctx = {tickCtx}");
             foreach (var simulationObject in simRegistry.GetOrderedSimulationObjects())
             {
                 simulationObject.Tick(tickCtx);
             }
-            tickHistory.Add(tickCtx);
         }
         void TickRender()
         {
-            
+            foreach (var simulationObject in simRegistry.GetOrderedSimulationObjects())
+            {
+                simulationObject.Render(Time.fixedDeltaTime);
+            }
         }
         TickContext BuildTickContext()
         {
@@ -81,7 +98,7 @@ namespace Game.Simulation
         }
         public GameHistory ExportGameHistory()
         {
-            return new GameHistory(seed, tickHistory.ToList());
+            return new GameHistory(seed, tickHistory.ToList(), stateHistory.ToList());
         }
     }
 }

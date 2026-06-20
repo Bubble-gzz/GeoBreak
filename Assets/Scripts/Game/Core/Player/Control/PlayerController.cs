@@ -71,5 +71,15 @@ namespace Game.Core.Control
         {
             Debug.LogError($"[{name}.PlayerController] " + message);
         }
+        public override void SerializeState(StateWriter writer)
+        {
+            writer.WriteBool(isDashCoolingDown);
+            writer.WriteFloat(dashCooldownTimer);
+        }
+        public override void DeserializeState(StateReader reader)
+        {
+            isDashCoolingDown = reader.ReadBool();
+            dashCooldownTimer = reader.ReadFloat();
+        }
     }
 }
