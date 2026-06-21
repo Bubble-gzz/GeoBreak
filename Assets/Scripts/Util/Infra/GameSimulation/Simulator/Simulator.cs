@@ -4,60 +4,63 @@ using UnityEngine;
 using Game.System;
 using Game.Util;
 using System.Linq;
-
+using System;
 namespace Game.Simulation
 {
-    public abstract class Simulator : MonoBehaviour
+    public abstract class Simulator : MonoBehaviour, ISimWorld
     {
         protected int seed;
         protected IRandomGenerator rng;
         protected SimRegistry simRegistry;
+        protected List<ISimObject> objectsToUnregister = new List<ISimObject>();
         protected void Init(int seed)
         {
             this.seed = seed;
             rng = new RandomGenerator(seed);
-            simRegistry = new SimRegistry();
-            FetchSimulatedObjectsInScene();
+            simRegistry = new SimRegistry(this);
+            var simObjects = Utils.FetchAllSimObjectsInScene();
+            foreach (var simObject in simObjects)
+            {
+                simRegistry.RegisterSimulationObject(simObject);
+            }
             ExtraInit();
         }
         protected virtual void ExtraInit() {}
-        protected void FetchSimulatedObjectsInScene()
-        {
-            simRegistry.Clear();
-            List<ISimulationObject> simulationObjectsList = new List<ISimulationObject>();
-            MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-            foreach (MonoBehaviour behaviour in behaviours)
-            {
-                if (behaviour is ISimulationObject simulationObject)
-                {
-                    simulationObjectsList.Add(simulationObject);
-                }
-            }
-            foreach (var simulationObject in simulationObjectsList)
-            {
-                simRegistry.RegisterSimulationObject(simulationObject);
-            }
-            this.Log($"Fetched {simulationObjectsList.Count} simulation objects: [{string.Join(", ", simulationObjectsList.Select(s => s.ToString()))}]");
+        public virtual void RegisterObject(ISimObject simObject) {
+            simRegistry.RegisterSimulationObject(simObject);
         }
-        public void RegisterSimulationObject(ISimulationObject simulationObject)
+        public virtual void UnregisterObject(ISimObject simObject) {
+            objectsToUnregister.Add(simObject);
+        }
+        protected void UnregisterQueuedObjects()
         {
-            simRegistry.RegisterSimulationObject(simulationObject);
+            foreach (var simObject in objectsToUnregister)
+            {
+                simRegistry.UnregisterSimulationObject(simObject);
+            }
+            objectsToUnregister.Clear();
         }
     }
-    public interface ISimulationObject
+    public interface ISimObject
     {
-        string id { get; }
+        ISimWorld simWorld { get; set; }
+        int tickOrder { get; }
         void Init();
         void Tick(TickContext tickCtx);
         void SerializeState(StateWriter writer);
         void DeserializeState(StateReader reader);
         void Render(float deltaTime);
     }
+    public interface ISimWorld
+    {
+        void RegisterObject(ISimObject simObject);
+        void UnregisterObject(ISimObject simObject);
+    }
     public class SimObjectState{
         public int tick;
-        public string objectId;
+        public int objectId;
         public byte[] data;
-        public SimObjectState(int tick, string objectId, byte[] data)
+        public SimObjectState(int tick, int objectId, byte[] data)
         {
             this.tick = tick;
             this.objectId = objectId;

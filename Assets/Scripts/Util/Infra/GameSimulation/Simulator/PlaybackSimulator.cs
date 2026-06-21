@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.Linq;
 namespace Game.Simulation
 {
     public class PlaybackSimulator : Simulator
@@ -28,11 +28,13 @@ namespace Game.Simulation
             Init(gameHistory.seed);
             StartCoroutine(RunSimulationCoroutine());
         }
+        List<ISimObject> simListSnapshot;
         IEnumerator RunSimulationCoroutine()
         {
             int tick = 0;
             foreach (var tickCtx in tickHistory)
             {
+                simListSnapshot = simRegistry.GetOrderedSimulationObjects().ToList();
                 Tick(tick, tickCtx);
                 yield return new WaitForFixedUpdate();
                 tick++;
@@ -40,30 +42,34 @@ namespace Game.Simulation
         }
         void Tick(int tick, TickContext tickCtx)
         {
-            foreach (var simObject in simRegistry.GetOrderedSimulationObjects())
+            tickCtx.rng = rng;
+            foreach (var simObject in simListSnapshot)
             {
                 simObject.Tick(tickCtx);
             }
             foreach (var state in syncListOfEachTick[tick])
             {
-                string objectId = state.objectId;
+                int objectId = state.objectId;
                 byte[] data = state.data;
                 StateReader reader = new StateReader(data);
-                ISimulationObject simObject = simRegistry.GetSimulationObject(objectId);
+                ISimObject simObject = simRegistry.GetSimulationObject(objectId);
                 simObject.DeserializeState(reader);
             }
-            foreach (var simObject in simRegistry.GetOrderedSimulationObjects())
+            foreach (var simObject in simListSnapshot)
             {
                 simObject.Render(tickCtx.deltaTime);
             }
+            UnregisterQueuedObjects();
         }
     }
     public class GameHistory{
+        public Simulator simulator {get; private set;}
         public int seed {get; private set;}
         public List<TickContext> tickHistory {get; private set;}
         public List<SimObjectState> stateHistory {get; private set;}
-        public GameHistory(int seed, List<TickContext> tickHistory, List<SimObjectState> stateHistory)
+        public GameHistory(Simulator simulator, int seed, List<TickContext> tickHistory, List<SimObjectState> stateHistory)
         {
+            this.simulator = simulator;
             this.seed = seed;
             this.tickHistory = tickHistory;
             this.stateHistory = stateHistory;

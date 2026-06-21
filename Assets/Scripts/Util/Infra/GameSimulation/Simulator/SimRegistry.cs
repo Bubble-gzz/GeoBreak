@@ -7,26 +7,50 @@ namespace Game.Simulation
 {
     public class SimRegistry
     {
-        private SortedDictionary<(int tickOrder, string id), ISimulationObject> orderedSimObjects;
-        private Dictionary<string, ISimulationObject> simObjectsById;
-        public SimRegistry()
+        private ISimWorld simWorld;
+        int nextId;
+        private SortedSet<ISimObject> orderedSimObjects;
+        private Dictionary<int, ISimObject> simObjectsById;
+        private Dictionary<ISimObject, int> idTable;
+        public SimRegistry(ISimWorld simWorld)
         {
-            orderedSimObjects = new SortedDictionary<(int tickOrder, string id), ISimulationObject>();
-            simObjectsById = new Dictionary<string, ISimulationObject>();
+            this.simWorld = simWorld;
+            nextId = 0;
+            orderedSimObjects = new SortedSet<ISimObject>(new SimObjectComparer(this));
+            simObjectsById = new Dictionary<int, ISimObject>();
+            idTable = new Dictionary<ISimObject, int>();
         }
-        public void RegisterSimulationObject(ISimulationObject simulationObject)
+        public void RegisterSimulationObject(ISimObject simulationObject)
         {
-            int tickOrder = simulationObject.GetAttribute<TickOrder>()?.Order ?? TickOrder.DefaultOrder;
-            string id = simulationObject.id;
-            orderedSimObjects.Add((tickOrder, id), simulationObject);
+            if (idTable.ContainsKey(simulationObject)) {
+                Game.Util.Utils.Log($"Simulation object {simulationObject.ToString()} already registered");
+                return;
+            }
+            int id = nextId++;
+            idTable.Add(simulationObject, id);
+            orderedSimObjects.Add(simulationObject);
             simObjectsById.Add(id, simulationObject);
+            simulationObject.simWorld = simWorld;
+            simulationObject.Init();
         }
-        public IEnumerable<ISimulationObject> GetOrderedSimulationObjects()
+        public void UnregisterSimulationObject(ISimObject simulationObject)
         {
-            this.Log($"Getting {orderedSimObjects.Count} simulation objects: \n[\n{string.Join("\n ", orderedSimObjects.Select(s => "  " + s.Value.ToString()))}\n]");
-            return orderedSimObjects.Values;
+            if (!idTable.ContainsKey(simulationObject)) {
+                Game.Util.Utils.Log($"Simulation object {simulationObject.ToString()} not registered");
+                return;
+            }
+            int id = idTable[simulationObject];
+            orderedSimObjects.Remove(simulationObject);
+            simObjectsById.Remove(id);
+            idTable.Remove(simulationObject);
+            simulationObject.simWorld = null;
         }
-        public ISimulationObject GetSimulationObject(string id)
+        public IEnumerable<ISimObject> GetOrderedSimulationObjects()
+        {
+            this.Log($"Getting {orderedSimObjects.Count} simulation objects: \n[\n{string.Join("\n ", orderedSimObjects.Select(s => "  " + s.ToString()))}\n]");
+            return orderedSimObjects;
+        }
+        public ISimObject GetSimulationObject(int id)
         {
             return simObjectsById[id];
         }
@@ -34,6 +58,33 @@ namespace Game.Simulation
         {
             orderedSimObjects.Clear();
             simObjectsById.Clear();
+            idTable.Clear();
+        }
+        public int GetId(ISimObject simulationObject)
+        {
+            return idTable[simulationObject];
+        }
+
+        private class SimObjectComparer : IComparer<ISimObject>
+        {
+            private readonly SimRegistry registry;
+
+            public SimObjectComparer(SimRegistry registry)
+            {
+                this.registry = registry;
+            }
+
+            public int Compare(ISimObject a, ISimObject b)
+            {
+                if (ReferenceEquals(a, b)) return 0;
+                if (a == null) return -1;
+                if (b == null) return 1;
+
+                int tickOrderCompare = a.tickOrder.CompareTo(b.tickOrder);
+                if (tickOrderCompare != 0) return tickOrderCompare;
+
+                return registry.GetId(a).CompareTo(registry.GetId(b));
+            }
         }
     }
 }

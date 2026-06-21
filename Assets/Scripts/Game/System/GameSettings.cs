@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Game.Core.Control;
+using Game.Core;
 namespace Game.System
 {
     public class GameSettings
@@ -26,8 +26,7 @@ namespace Game.System
         {
             KeyBindSystem<PlayerKey> keyBindSystem = new KeyBindSystem<PlayerKey>();
             keyBindSystem.AddKeyBind(PlayerKey.Dash, KeyCode.Space);
-            keyBindSystem.AddKeyBind(PlayerKey.Teleport, KeyCode.Mouse1);
-            keyBindSystem.AddKeyBind(PlayerKey.Fire, KeyCode.Mouse0);
+            keyBindSystem.AddKeyBind(PlayerKey.Fire, KeyCode.Mouse1);
             return keyBindSystem;
         }
         public KeyBindSystem<PlayerKey> playerKeyBindSystem

@@ -33,6 +33,12 @@ namespace Game.Simulation
             }
             inputData.GetAxisRaw["Horizontal"] = Input.GetAxisRaw("Horizontal");
             inputData.GetAxisRaw["Vertical"] = Input.GetAxisRaw("Vertical");
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null) {
+                Vector3 mouseScreenPosition = Input.mousePosition;
+                mouseScreenPosition.z = -mainCamera.transform.position.z;
+                inputData.mouseWorldPosition = mainCamera.ScreenToWorldPoint(mouseScreenPosition);
+            }
             return inputData;
         }
         public void ClearInputDataCache()
@@ -42,6 +48,8 @@ namespace Game.Simulation
         public InputData GetInputDataOverFrames()
         {
             InputData inputData = new InputData();
+            if (inputDataCache.Count == 0) return inputData;
+
             foreach(KeyCode keyCode in Enum.GetValues(typeof(KeyCode)))
             {
                 foreach(InputData frame in inputDataCache)
@@ -49,12 +57,17 @@ namespace Game.Simulation
                     inputData.GetKeyDown[keyCode] |= frame.GetKeyDown[keyCode];
                     inputData.GetKeyUp[keyCode] |= frame.GetKeyUp[keyCode];
                     inputData.GetKey[keyCode] |= frame.GetKey[keyCode];
-                    inputData.GetAxisRaw["Horizontal"] += frame.GetAxisRaw["Horizontal"];
-                    inputData.GetAxisRaw["Vertical"] += frame.GetAxisRaw["Vertical"];
                 }
-                inputData.GetAxisRaw["Horizontal"] /= inputDataCache.Count;
-                inputData.GetAxisRaw["Vertical"] /= inputDataCache.Count;
             }
+            foreach(InputData frame in inputDataCache)
+            {
+                inputData.GetAxisRaw["Horizontal"] += frame.GetAxisRaw["Horizontal"];
+                inputData.GetAxisRaw["Vertical"] += frame.GetAxisRaw["Vertical"];
+                inputData.mouseWorldPosition += frame.mouseWorldPosition;
+            }
+            inputData.GetAxisRaw["Horizontal"] /= inputDataCache.Count;
+            inputData.GetAxisRaw["Vertical"] /= inputDataCache.Count;
+            inputData.mouseWorldPosition /= inputDataCache.Count;
             return inputData;
         }
         public InputData GetInputDataOfLatestFrame()
@@ -73,6 +86,7 @@ namespace Game.Simulation
         public Dictionary<KeyCode, bool> GetKeyUp = new Dictionary<KeyCode, bool>();
         public Dictionary<KeyCode, bool> GetKey = new Dictionary<KeyCode, bool>();
         public Dictionary<string, float> GetAxisRaw = new Dictionary<string, float>();
+        public Vector2 mouseWorldPosition;
         public InputData()
         {
             foreach(KeyCode keyCode in Enum.GetValues(typeof(KeyCode)))
@@ -83,6 +97,7 @@ namespace Game.Simulation
             }
             GetAxisRaw["Horizontal"] = 0f;
             GetAxisRaw["Vertical"] = 0f;
+            mouseWorldPosition = Vector2.zero;
         }
         override public string ToString()
         {

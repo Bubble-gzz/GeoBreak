@@ -6,13 +6,12 @@ using Game.Simulation;
 using Game.Util;
 using Game.Render;
 
-namespace Game.Core.Control
+namespace Game.Core
 {
     /*
         提供物体移动能力的模块
     */
-    [TickOrder(TickOrder.RenderOrder)]
-    public class MoveModule : SimulatedMonobehaviour
+    public class MoveModule : SimMonobehaviour
     {
         [SerializeField] public float maxSpeed = 10f;
         [SerializeField] public float dampTime = 0.1f;
@@ -21,52 +20,31 @@ namespace Game.Core.Control
         private float damp => maxSpeed / Mathf.Max(dampTime, 0.001f);
         private float accel => maxSpeed / Mathf.Max(accelTime, 0.001f) + damp;
         [SerializeField] public float dashExtraSpeed = 10f;
-        [SerializeField] public SimRigidbody rb;
+        [SerializeField] public SimRigidbody2D rb;
+        private Vector2 velocity {get => rb.velocity; set => rb.velocity = value; }
         [SerializeField] public PositionRenderer positionRenderer;
-        [SerializeField] private Vector2 velocity;
-        bool dampedThisTick;
         override public void Init()
         {
-            velocity = Vector2.zero;
-            dampedThisTick = false;
-            if (rb == null) {
-                rb = GetComponent<SimRigidbody>();
-                if (rb != null) this.Log("Auto assigned SimRigidbody", true);
-            }
-            if (rb == null) {
-                rb = gameObject.AddComponent<SimRigidbody>();
-                this.Log("Auto added SimRigidbody", true);
-            }
+            AutoFillSimObjectField(ref rb);
         }
-
-        override public void Tick(TickContext tickCtx)
-        {
-            UpdateVelocity(tickCtx.deltaTime);
-            dampedThisTick = false;
-        }
-
-        private void UpdateVelocity(float deltaTime)
+        public void UpdateVelocity(float deltaTime, bool skipCoastDamp)
         {
             if (velocity.magnitude > maxSpeed)
             {
                 float dampFactor = Mathf.Pow(dampingWhenOverSpeed, deltaTime / GameConstants.referenceDeltaTime);
-                velocity *= dampFactor;
+                velocity = velocity * dampFactor;
             }
             else {
-                if (!dampedThisTick) {
+                if (!skipCoastDamp) {
                     Vector2 dampVector = - velocity.normalized * Mathf.Min(damp * deltaTime, velocity.magnitude);
-                    velocity += dampVector;
-                    dampedThisTick = true;
+                    velocity = velocity + dampVector;
                 }
             }
-            rb.velocity = velocity;
         }
         public void ApplyMoveDir(Vector2 dir, float deltaTime)
         {
             if (dir.magnitude == 0) return;
             Vector2 v_accel = dir * (accel - damp) * deltaTime;
-            dampedThisTick = true;
-
             Vector2 v = velocity;
             Vector2 v2 = v + v_accel;
             if (v2.magnitude > maxSpeed)
@@ -94,19 +72,7 @@ namespace Game.Core.Control
         public void ApplyDash(Vector2 dashDir)
         {
             if (dashDir.magnitude == 0) dashDir = velocity.normalized;
-            velocity += dashDir * dashExtraSpeed;
-        }
-        private void LogError(string msg)
-        {
-            Debug.LogError($"[{name}.MoveModule] " + msg);
-        }
-        override public void SerializeState(StateWriter writer)
-        {
-            writer.WriteVector2(velocity);
-        }
-        override public void DeserializeState(StateReader reader)
-        {
-            velocity = reader.ReadVector2();
+            velocity = velocity + dashDir * dashExtraSpeed;
         }
         override public void Render(float deltaTime)
         {
@@ -116,5 +82,6 @@ namespace Game.Core.Control
             }
             positionRenderer.Render(rb.position, deltaTime);
         }
+
     }
 }

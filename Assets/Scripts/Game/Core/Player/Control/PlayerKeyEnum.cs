@@ -1,4 +1,4 @@
-namespace Game.Core.Control
+namespace Game.Core
 {
     public enum PlayerKey
     {

@@ -8,7 +8,6 @@ namespace Game.Util
 {
     public static class Extensions
     {
-    #region MetaInformation
         public static string GetTransformPath(this Transform transform)
         {
             string path = $"{transform.GetSiblingIndex()}:{transform.name}";
@@ -20,7 +19,7 @@ namespace Game.Util
             }
             return path;
         }
-        public static string GetComponentKey(this MonoBehaviour component)
+        public static string GetComponentKey(this Component component)
         {
             string result = $"{component.GetType().FullName}@{component.transform.GetTransformPath()}";
             Utils.Log(result);
@@ -30,7 +29,40 @@ namespace Game.Util
         {
             return obj.GetType().GetCustomAttribute<T>(true);
         }
-    #endregion
+        public static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component
+        {
+            T component = gameObject.GetComponent<T>();
+            if (component != null) gameObject.Log("Auto assigned " + typeof(T).Name, true);
+            else {
+                component = gameObject.AddComponent<T>();
+                gameObject.Log("Auto added " + typeof(T).Name, true);
+            }
+            return component;
+        }
+
+        public static void AutoFillComponentField<T>(
+            this Component owner,
+            ref T field,
+            bool autoAdd = true,
+            bool searchInChildren = true
+        ) where T : Component
+        {
+            if (field != null) return;
+
+            field = searchInChildren ? owner.GetComponentInChildren<T>() : owner.GetComponent<T>();
+            if (field != null) {
+                owner.Log("Auto assigned " + typeof(T).Name, true);
+                return;
+            }
+
+            if (!autoAdd) {
+                owner.LogError("No " + typeof(T).Name + " found", true);
+                return;
+            }
+
+            field = owner.gameObject.AddComponent<T>();
+            owner.Log("Auto added " + typeof(T).Name, true);
+        }
 
     #region Logging
         [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]

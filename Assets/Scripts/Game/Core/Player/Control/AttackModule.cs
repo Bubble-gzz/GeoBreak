@@ -2,28 +2,41 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Game.Simulation;
-namespace Game.Core.Control
+namespace Game.Core
 {
-    [TickOrder(TickOrder.RenderOrder)]
-    public class AttackModule : SimulatedMonobehaviour
+    public class AttackModule : SimMonobehaviour
     {
-        // Start is called before the first frame update
+        [SerializeField] private PrimaryWeapon primaryWeapon;
         Vector2 dir;
+
         override public void Init()
         {
-
+            AutoFillSimObjectField(ref primaryWeapon, autoAdd: false);
         }
-        override public void Tick(TickContext tickCtx)
+
+        public void UpdateFireCooldown(float deltaTime)
         {
-            
+            if (primaryWeapon != null) primaryWeapon.UpdateFireCooldown(deltaTime);
         }
         public void UpdateDir(Vector2 newDir)
         {
             dir = newDir;
+            if (primaryWeapon != null) primaryWeapon.UpdateAimDirection(dir);
         }
         public void Fire()
         {
+            if (primaryWeapon == null) return;
+            primaryWeapon.Fire();
+        }
 
+        override public void SerializeState(StateWriter writer)
+        {
+            writer.WriteVector2(dir);
+        }
+
+        override public void DeserializeState(StateReader reader)
+        {
+            dir = reader.ReadVector2();
         }
     }
 }
