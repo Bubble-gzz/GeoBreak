@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Game.Simulation;
 using Game.Util;
@@ -7,6 +8,11 @@ namespace Game.Core
 {
     public class Bullet : SimMonobehaviour
     {
+        static Bullet()
+        {
+            StateDescriberRegistry.Register<Bullet>(DescribeSerializedState);
+        }
+
         [SerializeField] SimRigidbody2D rb;
         private Vector2 velocity {get => rb.velocity; set => rb.velocity = value; }
         private float rotation {get => rb.rotation; set => rb.rotation = value; }
@@ -37,6 +43,11 @@ namespace Game.Core
         public override void DeserializeState(StateReader reader)
         {
             speed = reader.ReadFloat();
+        }
+
+        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        {
+            StateSnapshotFormat.AppendFloat(sb, "speed", reader.ReadFloat());
         }
     }
 }

@@ -12,11 +12,24 @@ namespace Game.Simulation
         private InputData localInputDataThisTick;
         List<TickContext> tickHistory;
         List<SimObjectState> stateHistory;
+        List<FrameRecord> frameRecords;
+        List<int> registeredThisTick;
+        Dictionary<int, string> objectTypeById;
         protected override void ExtraInit()
         {
             tickCount = 0;
             tickHistory = new List<TickContext>();
             stateHistory = new List<SimObjectState>();
+            frameRecords = new List<FrameRecord>();
+            registeredThisTick = new List<int>();
+            objectTypeById = new Dictionary<int, string>();
+        }
+        public override void RegisterObject(ISimObject simObject)
+        {
+            base.RegisterObject(simObject);
+            int id = simRegistry.GetId(simObject);
+            registeredThisTick.Add(id);
+            objectTypeById[id] = simObject.GetType().FullName;
         }
         public void RunWithRandomSeed()
         {
@@ -53,6 +66,7 @@ namespace Game.Simulation
         List<ISimObject> simListSnapshot;
         void BeforeTick()
         {
+            registeredThisTick.Clear();
             localInputDataThisTick = InputProcessor.Instance.ConsumeInputDataOverFrames();
             simListSnapshot = simRegistry.GetOrderedSimulationObjects().ToList();
         }
@@ -85,11 +99,33 @@ namespace Game.Simulation
         const int SYNC_FRAME_INTERVAL = 500;
         void AfterTick()
         {
-            TakeSnapshot();
+            List<SimObjectState> debugObjectStates = new List<SimObjectState>();
+            TakeDebugSnapshot(debugObjectStates);
+            List<int> unregisteredIds = objectsToUnregister
+                .Select(o => simRegistry.GetId(o))
+                .ToList();
+            frameRecords.Add(new FrameRecord(
+                tickCount,
+                debugObjectStates,
+                new List<int>(registeredThisTick),
+                unregisteredIds
+            ));
+            TakeSyncSnapshot();
             UnregisterQueuedObjects();
             tickCount++;
         }
-        void TakeSnapshot()
+        void TakeDebugSnapshot(List<SimObjectState> snapshots)
+        {
+            foreach (var simulationObject in simListSnapshot)
+            {
+                int objectId = simRegistry.GetId(simulationObject);
+                StateWriter writer = new StateWriter();
+                simulationObject.SerializeState(writer);
+                byte[] data = writer.ToArray();
+                snapshots.Add(new SimObjectState(tickCount, objectId, data));
+            }
+        }
+        void TakeSyncSnapshot()
         {
             if (tickCount % SYNC_FRAME_INTERVAL == 0) {
                 foreach (var simulationObject in simListSnapshot)
@@ -98,18 +134,18 @@ namespace Game.Simulation
                     StateWriter writer = new StateWriter();
                     simulationObject.SerializeState(writer);
                     byte[] data = writer.ToArray();
-                    SimObjectState snapshot = new SimObjectState(tickCount, objectId, data);
-                    stateHistory.Add(snapshot);
+                    stateHistory.Add(new SimObjectState(tickCount, objectId, data));
                 }
             }
         }
         public GameHistory ExportGameHistory()
         {
             return new GameHistory(
-                this,
                 seed,
                 tickHistory.ToList(),
-                stateHistory.ToList()
+                stateHistory.ToList(),
+                frameRecords.Select(f => f.Clone()).ToList(),
+                new Dictionary<int, string>(objectTypeById)
             );
         }
     }

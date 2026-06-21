@@ -62,17 +62,4 @@ namespace Game.Simulation
             UnregisterQueuedObjects();
         }
     }
-    public class GameHistory{
-        public Simulator simulator {get; private set;}
-        public int seed {get; private set;}
-        public List<TickContext> tickHistory {get; private set;}
-        public List<SimObjectState> stateHistory {get; private set;}
-        public GameHistory(Simulator simulator, int seed, List<TickContext> tickHistory, List<SimObjectState> stateHistory)
-        {
-            this.simulator = simulator;
-            this.seed = seed;
-            this.tickHistory = tickHistory;
-            this.stateHistory = stateHistory;
-        }
-    }
 }

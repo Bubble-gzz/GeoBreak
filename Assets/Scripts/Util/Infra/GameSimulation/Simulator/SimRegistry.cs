@@ -52,6 +52,10 @@ namespace Game.Simulation
         }
         public ISimObject GetSimulationObject(int id)
         {
+            if (!simObjectsById.ContainsKey(id)) {
+                this.LogError($"Simulation object with id {id} not found", true);
+                return null;
+            }
             return simObjectsById[id];
         }
         public void Clear()

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Game.Simulation;
 using Game.Util;
@@ -8,6 +9,11 @@ namespace Game.Core
 {
     public class PrimaryWeapon : SimMonobehaviour
     {
+        static PrimaryWeapon()
+        {
+            StateDescriberRegistry.Register<PrimaryWeapon>(DescribeSerializedState);
+        }
+
         [SerializeField] private GameObject bulletPrefab;
         [SerializeField] private Transform firePoint;
         [SerializeField] private float fireCooldown = 0.1f;
@@ -53,6 +59,12 @@ namespace Game.Core
         {
             fireCooldownTimer = reader.ReadFloat();
             UpdateAimDirection(reader.ReadVector2());
+        }
+
+        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        {
+            StateSnapshotFormat.AppendFloat(sb, "cooldown", reader.ReadFloat());
+            StateSnapshotFormat.AppendVector2(sb, "aimDir", reader.ReadVector2());
         }
     }
 }

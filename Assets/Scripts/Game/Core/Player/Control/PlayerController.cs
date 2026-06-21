@@ -1,10 +1,16 @@
 using UnityEngine;
 using Game.Util;
 using Game.Simulation;
+using System.Text;
 namespace Game.Core
 {
     public class PlayerController : SimMonobehaviour
     {
+        static PlayerController()
+        {
+            StateDescriberRegistry.Register<PlayerController>(DescribeSerializedState);
+        }
+
         override public int tickOrder { get => TickOrder.ControlOrder; }
         [SerializeField] private MoveModule moveModule;
         [SerializeField] private AttackModule attackModule;
@@ -94,6 +100,12 @@ namespace Game.Core
         {
             isDashCoolingDown = reader.ReadBool();
             dashCooldownTimer = reader.ReadFloat();
+        }
+
+        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        {
+            StateSnapshotFormat.AppendBool(sb, "isDashCoolingDown", reader.ReadBool());
+            StateSnapshotFormat.AppendFloat(sb, "dashCooldown", reader.ReadFloat());
         }
     }
 }

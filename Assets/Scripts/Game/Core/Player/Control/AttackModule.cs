@@ -1,11 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Game.Simulation;
 namespace Game.Core
 {
     public class AttackModule : SimMonobehaviour
     {
+        static AttackModule()
+        {
+            StateDescriberRegistry.Register<AttackModule>(DescribeSerializedState);
+        }
+
         [SerializeField] private PrimaryWeapon primaryWeapon;
         Vector2 dir;
 
@@ -37,6 +43,11 @@ namespace Game.Core
         override public void DeserializeState(StateReader reader)
         {
             dir = reader.ReadVector2();
+        }
+
+        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        {
+            StateSnapshotFormat.AppendVector2(sb, "dir", reader.ReadVector2());
         }
     }
 }

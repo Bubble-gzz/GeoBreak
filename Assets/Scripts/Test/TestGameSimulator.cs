@@ -36,6 +36,7 @@ public class TestGameSimulator : MonoBehaviour
         yield return null;
         Init();
         GameHistory gameHistory = hostRealtimeSimulator.ExportGameHistory();
+        Debug.Log(gameHistory.ToString());
         playbackSimulator.Run(gameHistory);
     }
     void Init()
