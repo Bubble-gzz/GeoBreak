@@ -23,7 +23,6 @@ namespace Game.Core
         [SerializeField] public float dashExtraSpeed = 10f;
         [SerializeField] public SimRigidbody2D rb;
         private Vector2 velocity {get => rb.velocity; set => rb.velocity = value; }
-        [SerializeField] public PositionRenderer positionRenderer;
         override public void Init()
         {
             AutoFillSimObjectField(ref rb);
@@ -74,14 +73,6 @@ namespace Game.Core
         {
             if (dashDir.magnitude == 0) dashDir = velocity.normalized;
             velocity = velocity + dashDir * dashExtraSpeed;
-        }
-        override public void Render(float deltaTime)
-        {
-            if (positionRenderer == null) {
-                this.Log("PositionRenderer is not assigned", true);
-                return;
-            }
-            positionRenderer.Render(rb.position, deltaTime);
         }
         override public void DescribeState(StringBuilder sb)
         {

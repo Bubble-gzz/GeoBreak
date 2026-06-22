@@ -838,7 +838,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 494292466}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e2115038aea76e4fba72f3caca2e3b0, type: 3}
+  m_Script: {fileID: 11500000, guid: c96097da66f0fe34485dd4b002b18f0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   renderTarget: {fileID: 494292467}
@@ -1661,7 +1661,6 @@ MonoBehaviour:
   accelTime: 0.05
   dashExtraSpeed: 20
   rb: {fileID: 1814247778}
-  positionRenderer: {fileID: 494292468}
 --- !u!1 &724242594
 GameObject:
   m_ObjectHideFlags: 0
@@ -2727,7 +2726,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   log: 1
-  logFilePath: log-realtime.txt
+  logFileName: log-realtime.txt
   logFrameInterval: 50
 --- !u!1 &1747914280
 GameObject:
@@ -3363,6 +3362,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 1814247777}
+  transformRenderer: {fileID: 494292468}
 --- !u!114 &1814247779
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3651,7 +3651,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   log: 1
-  logFilePath: log-playback.txt
+  logFileName: log-playback.txt
   logFrameInterval: 50
 --- !u!1 &2013612000
 GameObject:

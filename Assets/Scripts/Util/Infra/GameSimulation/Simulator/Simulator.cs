@@ -86,7 +86,9 @@ namespace Game.Simulation
         protected void OpenLogFile()
         {
             CloseLogFile();
-            string filePath = Path.Combine(Application.dataPath, "Logs", logFileName);
+            string fileDir = Path.Combine(Application.dataPath, "Logs");
+            if (!Directory.Exists(fileDir)) Directory.CreateDirectory(fileDir);
+            string filePath = Path.Combine(fileDir, logFileName);
             logWriter = new StreamWriter(filePath, append: false);
         }
 
