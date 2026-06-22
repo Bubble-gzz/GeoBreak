@@ -9,6 +9,7 @@ namespace Game.Core
     {
         [SerializeField] private PrimaryWeapon primaryWeapon;
         Vector2 dir;
+        public float aimAngle => Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
         override public void Init()
         {

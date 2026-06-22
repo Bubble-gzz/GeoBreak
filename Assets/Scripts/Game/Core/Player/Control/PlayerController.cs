@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Util;
 using Game.Simulation;
 using System.Text;
+using Game.Render;
 namespace Game.Core
 {
     public class PlayerController : SimMonobehaviour
@@ -9,7 +10,9 @@ namespace Game.Core
         override public int tickOrder { get => TickOrder.ControlOrder; }
         [SerializeField] private MoveModule moveModule;
         [SerializeField] private AttackModule attackModule;
+        [SerializeField] private PlayerRenderer playerRenderer;
         [SerializeField] private float dashCooldown = 0.5f;
+        [SerializeField] private bool continuousFire = false;
         private bool isDashCoolingDown = false;
         private float dashCooldownTimer;
         private bool skipCoastDampThisTick = false;
@@ -44,7 +47,8 @@ namespace Game.Core
             bool isDashKeyDown = inputData.GetKeyDown[keyBindSystem.GetKeyCode(PlayerKey.Dash)];
             HandleMoveInput(deltaTime, GetInputDir(inputData), isDashKeyDown);
             bool isFireKeyDown = inputData.GetKeyDown[keyBindSystem.GetKeyCode(PlayerKey.Fire)];
-            HandleAttackInput(inputData.mouseWorldPosition, isFireKeyDown);
+            bool isFireKeyHolding = inputData.GetKey[keyBindSystem.GetKeyCode(PlayerKey.Fire)];
+            HandleAttackInput(inputData.mouseWorldPosition, isFireKeyDown, isFireKeyHolding);
         }
         private void HandleMoveInput(float deltaTime, Vector2 inputDir, bool isDashKeyDown)
         {
@@ -64,11 +68,11 @@ namespace Game.Core
             }
         }
 
-        private void HandleAttackInput(Vector2 mouseWorldPosition, bool isFireKeyDown)
+        private void HandleAttackInput(Vector2 mouseWorldPosition, bool isFireKeyDown, bool isFireKeyHolding)
         {
             Vector2 aimDir = mouseWorldPosition - (Vector2)transform.position;
             if (attackModule != null) attackModule.UpdateDir(aimDir);
-            if (isFireKeyDown) {
+            if (isFireKeyDown || (continuousFire && isFireKeyHolding)) {
                 if (attackModule == null) {
                     this.LogError("AttackModule is not assigned", true);
                     return;
@@ -101,6 +105,10 @@ namespace Game.Core
         {
             StateSnapshotFormat.AppendBool(sb, "isDashCoolingDown", isDashCoolingDown);
             StateSnapshotFormat.AppendFloat(sb, "dashCooldownTimer", dashCooldownTimer);
+        }
+        public override void Render(float deltaTime)
+        {
+            if (playerRenderer != null) playerRenderer.Render(new PlayerRendererData(transform, attackModule.aimAngle, transform.localScale), deltaTime);
         }
     }
 }

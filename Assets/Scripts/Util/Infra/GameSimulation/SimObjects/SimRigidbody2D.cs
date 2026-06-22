@@ -10,7 +10,7 @@ namespace Game.Simulation
     public class SimRigidbody2D : SimMonobehaviour
     {
         [SerializeField] private Rigidbody2D rb;
-        [SerializeField] private TransformRenderer transformRenderer;
+        [SerializeField] private Rigidbody2DRenderer rigidbody2DRenderer;
         public Vector2 position { get => rb.position; set => rb.position = value; }
         public Vector2 velocity { get => rb.velocity; set => rb.velocity = value; }
         public float rotation { get => rb.rotation; set => rb.rotation = value; }
@@ -21,11 +21,11 @@ namespace Game.Simulation
         }
         override public void Render(float deltaTime)
         {
-            if (transformRenderer == null) {
-                this.Log("TransformRenderer is not assigned", true);
+            if (rigidbody2DRenderer == null) {
+                this.Log("Rigidbody2DRenderer is not assigned", true);
                 return;
             }
-            transformRenderer.Render(new TransformData(position, rotation, new Vector2(1f, 1f)), deltaTime);
+            rigidbody2DRenderer.Render(new Rigidbody2DData(position, rotation), deltaTime);
         }
         override public void SerializeState(StateWriter writer)
         {

@@ -62,16 +62,17 @@ namespace Game.Simulation
                 simWorld.RegisterObject(simObject);
             }
         }
-        protected void SimDestory()
+        protected void SimDestory(Transform root = null)
         {
+            if (root == null) root = transform;
             if (simWorld != null) {
-                var simObjects = Utils.FetchSimObjectsUnder(transform);
+                var simObjects = Utils.FetchSimObjectsUnder(root);
                 foreach (var simObject in simObjects)
                 {
                     simWorld.UnregisterObject(simObject);
                 }
             }
-            Destroy(gameObject);
+            Destroy(root.gameObject);
         }
         protected virtual void SimOnCollisionEnter2D(SimCollision2D collision) {}
         protected void OnCollisionEnter2D(Collision2D collision)
