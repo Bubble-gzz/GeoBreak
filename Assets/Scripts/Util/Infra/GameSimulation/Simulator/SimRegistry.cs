@@ -7,68 +7,83 @@ namespace Game.Simulation
 {
     public class SimRegistry
     {
-        private ISimWorld simWorld;
-        int nextId;
+        private Simulator simWorld;
+        private int nextId;
         private SortedSet<ISimObject> orderedSimObjects;
-        private Dictionary<int, ISimObject> simObjectsById;
-        private Dictionary<ISimObject, int> idTable;
-        public SimRegistry(ISimWorld simWorld)
+        private Dictionary<string, ISimObject> simObjectsById;
+        private Dictionary<ISimObject, string> idTable;
+
+        public SimRegistry(Simulator simWorld)
         {
             this.simWorld = simWorld;
-            nextId = 0;
             orderedSimObjects = new SortedSet<ISimObject>(new SimObjectComparer(this));
-            simObjectsById = new Dictionary<int, ISimObject>();
-            idTable = new Dictionary<ISimObject, int>();
+            simObjectsById = new Dictionary<string, ISimObject>();
+            idTable = new Dictionary<ISimObject, string>();
         }
+
         public void RegisterSimulationObject(ISimObject simulationObject)
         {
             if (idTable.ContainsKey(simulationObject)) {
                 Game.Util.Utils.Log($"Simulation object {simulationObject.ToString()} already registered");
                 return;
             }
-            int id = nextId++;
+            string id = GenerateId();
             idTable.Add(simulationObject, id);
             orderedSimObjects.Add(simulationObject);
             simObjectsById.Add(id, simulationObject);
             simulationObject.simWorld = simWorld;
             simulationObject.Init();
         }
+
+        string GenerateId()
+        {
+            return (nextId++).ToString();
+        }
+
         public void UnregisterSimulationObject(ISimObject simulationObject)
         {
             if (!idTable.ContainsKey(simulationObject)) {
                 Game.Util.Utils.Log($"Simulation object {simulationObject.ToString()} not registered");
                 return;
             }
-            int id = idTable[simulationObject];
+            string id = idTable[simulationObject];
             orderedSimObjects.Remove(simulationObject);
             simObjectsById.Remove(id);
             idTable.Remove(simulationObject);
             simulationObject.simWorld = null;
         }
+
         public IEnumerable<ISimObject> GetOrderedSimulationObjects()
         {
             this.Log($"Getting {orderedSimObjects.Count} simulation objects: \n[\n{string.Join("\n ", orderedSimObjects.Select(s => "  " + s.ToString()))}\n]");
             return orderedSimObjects;
         }
-        public ISimObject GetSimulationObject(int id)
+
+        public ISimObject GetSimulationObject(string id)
         {
-            if (!simObjectsById.ContainsKey(id)) {
+            if (!simObjectsById.TryGetValue(id, out ISimObject simulationObject)) {
                 this.LogError($"Simulation object with id {id} not found", true);
                 return null;
             }
-            return simObjectsById[id];
+            return simulationObject;
         }
+
         public void Clear()
         {
             orderedSimObjects.Clear();
             simObjectsById.Clear();
             idTable.Clear();
-        }
-        public int GetId(ISimObject simulationObject)
-        {
-            return idTable[simulationObject];
+            nextId = 0;
         }
 
+        public string GetId(ISimObject simulationObject)
+        {
+            if (!idTable.TryGetValue(simulationObject, out string id)) {
+                this.LogError($"Simulation object {simulationObject.ToString()} not registered", true);
+                return "[missing]";
+            }
+            return id;
+        }
         private class SimObjectComparer : IComparer<ISimObject>
         {
             private readonly SimRegistry registry;

@@ -7,11 +7,6 @@ namespace Game.Core
 {
     public class AttackModule : SimMonobehaviour
     {
-        static AttackModule()
-        {
-            StateDescriberRegistry.Register<AttackModule>(DescribeSerializedState);
-        }
-
         [SerializeField] private PrimaryWeapon primaryWeapon;
         Vector2 dir;
 
@@ -44,10 +39,9 @@ namespace Game.Core
         {
             dir = reader.ReadVector2();
         }
-
-        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        override public void DescribeState(StringBuilder sb)
         {
-            StateSnapshotFormat.AppendVector2(sb, "dir", reader.ReadVector2());
+            StateSnapshotFormat.AppendVector2(sb, "dir", dir);
         }
     }
 }

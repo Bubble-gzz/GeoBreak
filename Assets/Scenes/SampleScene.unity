@@ -2726,6 +2726,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 899806eb8f534d541b011c7667eefa43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  log: 1
+  logFilePath: log-realtime.txt
+  logFrameInterval: 50
 --- !u!1 &1747914280
 GameObject:
   m_ObjectHideFlags: 0
@@ -3647,6 +3650,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e61bbc4865dcc5e428d391244a78133f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  log: 1
+  logFilePath: log-playback.txt
+  logFrameInterval: 50
 --- !u!1 &2013612000
 GameObject:
   m_ObjectHideFlags: 0

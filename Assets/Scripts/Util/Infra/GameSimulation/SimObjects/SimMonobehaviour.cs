@@ -2,25 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Game.Util;
+using System.Text;
 namespace Game.Simulation
 {
     public abstract class SimMonobehaviour : MonoBehaviour, ISimObject
     {
-        virtual public ISimWorld simWorld { get; set; }
+        virtual public Simulator simWorld { get; set; }
         virtual public int tickOrder { get => TickOrder.DefaultOrder; }
         virtual public void Init() {}
         virtual public void Tick(TickContext tickCtx) {}
         virtual public void SerializeState(StateWriter writer) {}
         virtual public void DeserializeState(StateReader reader) {}
         virtual public void Render(float deltaTime) {}
-        protected GameObject SimInstantiate(ISimWorld simWorld, GameObject prefab, Transform parent)
+        protected GameObject SimInstantiate(Simulator simWorld, GameObject prefab, Transform parent)
         {
             GameObject instance = Instantiate(prefab, parent);
             RegisterSimObjectsUnder(simWorld, instance.transform);
             return instance;
         }
 
-        protected GameObject SimInstantiate(ISimWorld simWorld, GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
+        protected GameObject SimInstantiate(Simulator simWorld, GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
         {
             GameObject instance = Instantiate(prefab, position, rotation, parent);
             RegisterSimObjectsUnder(simWorld, instance.transform);
@@ -52,7 +53,7 @@ namespace Game.Simulation
             }
         }
 
-        private void RegisterSimObjectsUnder(ISimWorld simWorld, Transform root)
+        private void RegisterSimObjectsUnder(Simulator simWorld, Transform root)
         {
             if (simWorld == null) return;
             var simObjects = Utils.FetchSimObjectsUnder(root);
@@ -77,6 +78,9 @@ namespace Game.Simulation
         {
             GameObject other = collision.rigidbody?.gameObject ?? collision.gameObject;
             SimOnCollisionEnter2D(new SimCollision2D(other));
+        }
+        public virtual void DescribeState(StringBuilder sb) {
+            StateSnapshotFormat.AppendDescription(sb, "(describe not implemented for this type)");
         }
     }
 }

@@ -1,26 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 namespace Game.Simulation
 {
     public class PlaybackSimulator : Simulator
     {
         private GameHistory gameHistory;
         List<TickContext> tickHistory => gameHistory.tickHistory;
-        List<SimObjectState> stateHistory => gameHistory.stateHistory;
-        List<SimObjectState>[] syncListOfEachTick;
+        List<SimObjectState>[] syncListOfEachTick => gameHistory.syncListOfEachTick;
         protected override void ExtraInit()
         {
-            syncListOfEachTick = new List<SimObjectState>[tickHistory.Count];
-            for (int i = 0; i < tickHistory.Count; i++)
-            {
-                syncListOfEachTick[i] = new List<SimObjectState>();
-            }
-            foreach (var state in stateHistory)
-            {
-                syncListOfEachTick[state.tick].Add(state);
-            }
+            tick = 0;
         }
         public void Run(GameHistory gameHistory)
         {
@@ -28,38 +18,39 @@ namespace Game.Simulation
             Init(gameHistory.seed);
             StartCoroutine(RunSimulationCoroutine());
         }
-        List<ISimObject> simListSnapshot;
         IEnumerator RunSimulationCoroutine()
         {
-            int tick = 0;
+            tick = 0;
             foreach (var tickCtx in tickHistory)
             {
-                simListSnapshot = simRegistry.GetOrderedSimulationObjects().ToList();
-                Tick(tick, tickCtx);
+                Tick(BuildContext(tickCtx));
                 yield return new WaitForFixedUpdate();
-                tick++;
             }
+            CloseLogFile();
+            yield break;
         }
-        void Tick(int tick, TickContext tickCtx)
+        TickContext BuildContext(TickContext tickCtx)
         {
-            tickCtx.rng = rng;
-            foreach (var simObject in simListSnapshot)
-            {
-                simObject.Tick(tickCtx);
-            }
+            TickContext newTickCtx = tickCtx.Clone();
+            newTickCtx.rng = rng;
+            return newTickCtx;
+        }
+        void Tick(TickContext tickCtx)
+        {
+            BeforeTick();
+            SimulateTick(tickCtx);
+            ApplySyncStates(tick);
+            RenderTick(tickCtx.deltaTime);
+            EndTick();
+            tick++;
+        }
+        void ApplySyncStates(int tick)
+        {
             foreach (var state in syncListOfEachTick[tick])
             {
-                int objectId = state.objectId;
-                byte[] data = state.data;
-                StateReader reader = new StateReader(data);
-                ISimObject simObject = simRegistry.GetSimulationObject(objectId);
-                simObject.DeserializeState(reader);
+                StateReader reader = new StateReader(state.data);
+                simRegistry.GetSimulationObject(state.objectId).DeserializeState(reader);
             }
-            foreach (var simObject in simListSnapshot)
-            {
-                simObject.Render(tickCtx.deltaTime);
-            }
-            UnregisterQueuedObjects();
         }
     }
 }

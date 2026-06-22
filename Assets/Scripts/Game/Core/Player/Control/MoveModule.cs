@@ -5,6 +5,7 @@ using Game.System;
 using Game.Simulation;
 using Game.Util;
 using Game.Render;
+using System.Text;
 
 namespace Game.Core
 {
@@ -81,6 +82,10 @@ namespace Game.Core
                 return;
             }
             positionRenderer.Render(rb.position, deltaTime);
+        }
+        override public void DescribeState(StringBuilder sb)
+        {
+            StateSnapshotFormat.AppendDescription(sb, "stateless module");
         }
 
     }

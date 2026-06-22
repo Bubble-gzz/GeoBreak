@@ -6,11 +6,6 @@ namespace Game.Core
 {
     public class PlayerController : SimMonobehaviour
     {
-        static PlayerController()
-        {
-            StateDescriberRegistry.Register<PlayerController>(DescribeSerializedState);
-        }
-
         override public int tickOrder { get => TickOrder.ControlOrder; }
         [SerializeField] private MoveModule moveModule;
         [SerializeField] private AttackModule attackModule;
@@ -102,10 +97,10 @@ namespace Game.Core
             dashCooldownTimer = reader.ReadFloat();
         }
 
-        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        public override void DescribeState(StringBuilder sb)
         {
-            StateSnapshotFormat.AppendBool(sb, "isDashCoolingDown", reader.ReadBool());
-            StateSnapshotFormat.AppendFloat(sb, "dashCooldown", reader.ReadFloat());
+            StateSnapshotFormat.AppendBool(sb, "isDashCoolingDown", isDashCoolingDown);
+            StateSnapshotFormat.AppendFloat(sb, "dashCooldownTimer", dashCooldownTimer);
         }
     }
 }

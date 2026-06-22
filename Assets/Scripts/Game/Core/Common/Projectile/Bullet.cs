@@ -8,11 +8,6 @@ namespace Game.Core
 {
     public class Bullet : SimMonobehaviour
     {
-        static Bullet()
-        {
-            StateDescriberRegistry.Register<Bullet>(DescribeSerializedState);
-        }
-
         [SerializeField] SimRigidbody2D rb;
         private Vector2 velocity {get => rb.velocity; set => rb.velocity = value; }
         private float rotation {get => rb.rotation; set => rb.rotation = value; }
@@ -45,9 +40,9 @@ namespace Game.Core
             speed = reader.ReadFloat();
         }
 
-        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        public override void DescribeState(StringBuilder sb)
         {
-            StateSnapshotFormat.AppendFloat(sb, "speed", reader.ReadFloat());
+            StateSnapshotFormat.AppendFloat(sb, "speed", speed);
         }
     }
 }

@@ -9,11 +9,6 @@ namespace Game.Core
 {
     public class PrimaryWeapon : SimMonobehaviour
     {
-        static PrimaryWeapon()
-        {
-            StateDescriberRegistry.Register<PrimaryWeapon>(DescribeSerializedState);
-        }
-
         [SerializeField] private GameObject bulletPrefab;
         [SerializeField] private Transform firePoint;
         [SerializeField] private float fireCooldown = 0.1f;
@@ -61,10 +56,10 @@ namespace Game.Core
             UpdateAimDirection(reader.ReadVector2());
         }
 
-        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        override public void DescribeState(StringBuilder sb)
         {
-            StateSnapshotFormat.AppendFloat(sb, "cooldown", reader.ReadFloat());
-            StateSnapshotFormat.AppendVector2(sb, "aimDir", reader.ReadVector2());
+            StateSnapshotFormat.AppendFloat(sb, "cooldown", fireCooldownTimer);
+            StateSnapshotFormat.AppendVector2(sb, "aimDir", aimDir);
         }
     }
 }

@@ -15,5 +15,14 @@ namespace Game.Simulation
         {
             return $"{{ deltaTime: {deltaTime} }}";
         }
+        public TickContext Clone()
+        {
+            return new TickContext{
+                deltaTime = deltaTime,
+                rng = rng,
+                inputDatas = new List<InputData>(inputDatas),
+                gameSettings = new List<GameSettings>(gameSettings)
+            };
+        }
     }
 }

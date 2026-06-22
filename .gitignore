@@ -92,3 +92,4 @@ crashlytics-build.properties
 fmod_editor.log
 
 /.cursor/
+**/Logs/

@@ -8,46 +8,51 @@ namespace Game.Simulation
 {
     public class HostRealtimeSimulator : Simulator
     {
-        private int tickCount;
         private InputData localInputDataThisTick;
         List<TickContext> tickHistory;
-        List<SimObjectState> stateHistory;
-        List<FrameRecord> frameRecords;
-        List<int> registeredThisTick;
-        Dictionary<int, string> objectTypeById;
+        List<List<SimObjectState>> syncListOfEachTick;
+        List<string> registeredThisTick;
+        Dictionary<string, string> objectTypeById;
+
         protected override void ExtraInit()
         {
-            tickCount = 0;
+            tick = 0;
             tickHistory = new List<TickContext>();
-            stateHistory = new List<SimObjectState>();
-            frameRecords = new List<FrameRecord>();
-            registeredThisTick = new List<int>();
-            objectTypeById = new Dictionary<int, string>();
+            syncListOfEachTick = new List<List<SimObjectState>>();
+            registeredThisTick = new List<string>();
+            objectTypeById = new Dictionary<string, string>();
         }
+
         public override void RegisterObject(ISimObject simObject)
         {
             base.RegisterObject(simObject);
-            int id = simRegistry.GetId(simObject);
+            string id = simRegistry.GetId(simObject);
             registeredThisTick.Add(id);
             objectTypeById[id] = simObject.GetType().FullName;
         }
+
         public void RunWithRandomSeed()
         {
             Run(new global::System.Random().Next());
         }
+
         Coroutine simulationCoroutine;
+
         public void Run(int seed)
         {
             Init(seed);
             Stop();
             simulationCoroutine = StartCoroutine(RunSimulationCoroutine());
         }
+
         public void Stop()
         {
             if (simulationCoroutine == null) return;
             StopCoroutine(simulationCoroutine);
             simulationCoroutine = null;
+            CloseLogFile();
         }
+
         IEnumerator RunSimulationCoroutine()
         {
             while (true)
@@ -56,30 +61,31 @@ namespace Game.Simulation
                 yield return new WaitForFixedUpdate();
             }
         }
+
         void Tick()
         {
             BeforeTick();
-            TickSimulation();
-            TickRender();
-            AfterTick();
-        }
-        List<ISimObject> simListSnapshot;
-        void BeforeTick()
-        {
-            registeredThisTick.Clear();
-            localInputDataThisTick = InputProcessor.Instance.ConsumeInputDataOverFrames();
-            simListSnapshot = simRegistry.GetOrderedSimulationObjects().ToList();
-        }
-        void TickSimulation()
-        {
+
             TickContext tickCtx = BuildTickContext();
             tickHistory.Add(tickCtx);
-            this.Log($"Tick #{tickCount}: Ctx = {tickCtx}");
-            foreach (var simulationObject in simListSnapshot)
-            {
-                simulationObject.Tick(tickCtx);
-            }
+            this.Log($"Tick #{tick}: Ctx = {tickCtx}");
+            SimulateTick(tickCtx);
+            RenderTick(Time.fixedDeltaTime);
+            List<string> unregisteredIds = objectsToUnregister
+                .Select(o => simRegistry.GetId(o))
+                .ToList();
+
+            TakeSyncSnapshot();
+            EndTick();
+            tick++;
         }
+        protected override void BeforeTick()
+        {
+            base.BeforeTick();
+            registeredThisTick.Clear();
+            localInputDataThisTick = InputProcessor.Instance.ConsumeInputDataOverFrames();
+        }
+
         TickContext BuildTickContext()
         {
             TickContext tickCtx = new TickContext();
@@ -89,63 +95,25 @@ namespace Game.Simulation
             tickCtx.gameSettings = new List<GameSettings> { GameSettings.LocalInstance };
             return tickCtx;
         }
-        void TickRender()
-        {
-            foreach (var simulationObject in simListSnapshot)
-            {
-                simulationObject.Render(Time.fixedDeltaTime);
-            }
-        }
+
         const int SYNC_FRAME_INTERVAL = 500;
-        void AfterTick()
-        {
-            List<SimObjectState> debugObjectStates = new List<SimObjectState>();
-            TakeDebugSnapshot(debugObjectStates);
-            List<int> unregisteredIds = objectsToUnregister
-                .Select(o => simRegistry.GetId(o))
-                .ToList();
-            frameRecords.Add(new FrameRecord(
-                tickCount,
-                debugObjectStates,
-                new List<int>(registeredThisTick),
-                unregisteredIds
-            ));
-            TakeSyncSnapshot();
-            UnregisterQueuedObjects();
-            tickCount++;
-        }
-        void TakeDebugSnapshot(List<SimObjectState> snapshots)
-        {
-            foreach (var simulationObject in simListSnapshot)
-            {
-                int objectId = simRegistry.GetId(simulationObject);
-                StateWriter writer = new StateWriter();
-                simulationObject.SerializeState(writer);
-                byte[] data = writer.ToArray();
-                snapshots.Add(new SimObjectState(tickCount, objectId, data));
-            }
-        }
+        
+
         void TakeSyncSnapshot()
         {
-            if (tickCount % SYNC_FRAME_INTERVAL == 0) {
-                foreach (var simulationObject in simListSnapshot)
-                {
-                    int objectId = simRegistry.GetId(simulationObject);
-                    StateWriter writer = new StateWriter();
-                    simulationObject.SerializeState(writer);
-                    byte[] data = writer.ToArray();
-                    stateHistory.Add(new SimObjectState(tickCount, objectId, data));
-                }
+            syncListOfEachTick.Add(new List<SimObjectState>());
+            if (tick % SYNC_FRAME_INTERVAL == 0) {
+                syncListOfEachTick[tick] = CollectObjectStates(tick);
             }
         }
+
         public GameHistory ExportGameHistory()
         {
             return new GameHistory(
                 seed,
                 tickHistory.ToList(),
-                stateHistory.ToList(),
-                frameRecords.Select(f => f.Clone()).ToList(),
-                new Dictionary<int, string>(objectTypeById)
+                syncListOfEachTick.ToArray(),
+                new Dictionary<string, string>(objectTypeById)
             );
         }
     }

@@ -8,11 +8,6 @@ namespace Game.Simulation
 {
     public class SimRigidbody2D : SimMonobehaviour
     {
-        static SimRigidbody2D()
-        {
-            StateDescriberRegistry.Register<SimRigidbody2D>(DescribeSerializedState);
-        }
-
         [SerializeField] private Rigidbody2D rb;
         public Vector2 position { get => rb.position; set => rb.position = value; }
         public Vector2 velocity { get => rb.velocity; set => rb.velocity = value; }
@@ -33,10 +28,10 @@ namespace Game.Simulation
             velocity = reader.ReadVector2();
         }
 
-        static void DescribeSerializedState(StateReader reader, StringBuilder sb)
+        override public void DescribeState(StringBuilder sb)
         {
-            StateSnapshotFormat.AppendVector2(sb, "position", reader.ReadVector2());
-            StateSnapshotFormat.AppendVector2(sb, "velocity", reader.ReadVector2());
+            StateSnapshotFormat.AppendVector2(sb, "position", position);
+            StateSnapshotFormat.AppendVector2(sb, "velocity", velocity);
         }
     }
 
