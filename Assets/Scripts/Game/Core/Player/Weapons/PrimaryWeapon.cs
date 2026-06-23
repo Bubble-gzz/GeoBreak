@@ -13,6 +13,7 @@ namespace Game.Core
         [SerializeField] private GameObject bulletPrefab;
         [SerializeField] private Transform firePoint;
         [SerializeField] private float fireCooldown = 0.1f;
+        [SerializeField] private float damage = 1;
         private float fireCooldownTimer;
         private Vector2 aimDir;
         public void UpdateFireCooldown(float deltaTime)
@@ -42,6 +43,10 @@ namespace Game.Core
             }
             Transform spawnPoint = firePoint == null ? transform : firePoint;
             GameObject bullet = SimInstantiate(simWorld, bulletPrefab, spawnPoint.position, spawnPoint.rotation, null);
+            bullet.GetComponentInChildren<Bullet>().Setup(
+                new DamageInfo(damage),
+                new List<string> { "Enemy" }
+            );
             fireCooldownTimer = fireCooldown;
         }
 
